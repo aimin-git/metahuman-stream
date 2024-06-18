@@ -16,20 +16,24 @@ import multiprocessing
 from aiohttp import web
 import aiohttp
 import aiohttp_cors
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
 from webrtc import HumanPlayer
+from server import run_server_sync
 
 import argparse
 
 import shutil
 import asyncio
 
+import cProfile
+import pstats
+
+import atexit
 
 app = Flask(__name__)
 sockets = Sockets(app)
 global nerfreal
 
-    
 @sockets.route('/humanecho')
 def echo_socket(ws):
     # 获取WebSocket对象
@@ -82,13 +86,24 @@ def chat_socket(ws):
 #####webrtc###############################
 pcs = set()
 
-#@app.route('/offer', methods=['POST'])
+@app.route('/offer', methods=['POST'])
 async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
-    pc = RTCPeerConnection()
+    iceServers = [RTCIceServer(urls=["stun:stun.l.google.com:19302"]), RTCIceServer(urls=["turn:turn.service.yongdao365.com:3478"],username="yongdao",credential="VM5LVDn8fe")]
+
+    # Debugging: Print the iceServers configuration
+    print("ICE Servers Configuration:", iceServers)
+
+    configuration = RTCConfiguration(iceServers=iceServers)
+
+    # Debugging: Check if the configuration is set correctly
+    print("RTC Configuration:", configuration)
+
+    pc = RTCPeerConnection(configuration=configuration)
     pcs.add(pc)
+
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
@@ -146,6 +161,7 @@ async def post(url,data):
         print(f'Error: {e}')
 
 async def run(push_url):
+  #  params = await request.json()
     pc = RTCPeerConnection()
     pcs.add(pc)
 
@@ -163,10 +179,22 @@ async def run(push_url):
     await pc.setLocalDescription(await pc.createOffer())
     answer = await post(push_url,pc.localDescription.sdp)
     await pc.setRemoteDescription(RTCSessionDescription(sdp=answer,type='answer'))
-##########################################
+
+#########################################################
+def save_profile_output():
+    profiler.disable()
+    profiler.dump_stats('profile.pstat')
+
+    with open('profile_output.txt', 'w') as f:
+        stats = pstats.Stats(profiler, stream=f)
+        stats.sort_stats('cumulative')
+        stats.print_stats()
 # os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 # os.environ['MULTIPROCESSING_METHOD'] = 'forkserver'                                                    
 if __name__ == '__main__':
+    profiler = cProfile.Profile()
+    profiler.enable()
+    atexit.register(save_profile_output)
     multiprocessing.set_start_method('spawn')
     parser = argparse.ArgumentParser()
     parser.add_argument('--pose', type=str, default="data/data_kf.json", help="transforms.json, pose source")
@@ -305,7 +333,7 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     #app.config.from_object(opt)
     #print(app.config)
-
+    print("主进程pid", os.getpid())
     if opt.model == 'ernerf':
         from ernerf.nerf_triplane.provider import NeRFDataset_Test
         from ernerf.nerf_triplane.utils import *
@@ -387,17 +415,17 @@ if __name__ == '__main__':
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(runner.setup())
+        print("run_server子进程", os.getpid())
         site = web.TCPSite(runner, '0.0.0.0', opt.listenport)
         loop.run_until_complete(site.start())
         if opt.transport=='rtcpush':
             loop.run_until_complete(run(opt.push_url))
         loop.run_forever()    
     Thread(target=run_server, args=(web.AppRunner(appasync),)).start()
-
+    #multiprocessing.Process(target=run_server_sync, args=(nerfreal,)).start()
     print('start websocket server')
     #app.on_shutdown.append(on_shutdown)
     #app.router.add_post("/offer", offer)
-    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(('0.0.0.0', 30003), app, handler_class=WebSocketHandler)
     server.serve_forever()
-    
     
