@@ -16,14 +16,14 @@ class Qwen:
         '''暂时不写api版本,与Linly-api相类似,感兴趣可以实现一下'''
         # 默认本地推理
         self.local = True
-
+        print("api key", api_key)
         # api_base和api_key不为空时使用openapi的方式
         if api_key is not None and api_base is not None:
             openai.api_base = api_base
             openai.api_key = api_key
             self.local = False
             return
-
+        print("qwen init self local", self.local)
         self.model, self.tokenizer = self.init_model(model_path)
         self.data = {}
 
@@ -40,18 +40,25 @@ class Qwen:
         if not self.local:
             # 不使用流式回复的请求
             response = openai.ChatCompletion.create(
-                model="Qwen",
+                model="qwen-long",
                 messages=[
+                    #设置role
+                    {"role": "system", "content": "你是一个demo演示的助手，请简介回答问题，每个问题的回答不超过50个字。"},
                     {"role": "user", "content": question}
-                ],
+                ],                
+                #messages=[
+                #    {"role": "user", "content": question}
+                #],
                 stream=False,
                 stop=[]
             )
+            print("qwen api")
             return response.choices[0].message.content
 
         # 默认本地推理
         self.data["question"] = f"{question} ### Instruction:{question}  ### Response:"
         try:
+            print("qwen local")
             response, history = self.model.chat(self.tokenizer, self.data["question"], history=None)
             print(history)
             return response

@@ -51,14 +51,17 @@ def echo_socket(ws):
             if not message or len(message)==0:
                 return '输入信息为空'
             else:                                
-                nerfreal.put_msg_txt(message)
-
+                #nerfreal.put_msg_txt(message)
+                res=llm_response(message)
+                nerfreal.put_msg_txt(res)
 
 def llm_response(message):
     from llm.LLM import LLM
     # llm = LLM().init_model('Gemini', model_path= 'gemini-pro',api_key='Your API Key', proxy_url=None)
     # llm = LLM().init_model('ChatGPT', model_path= 'gpt-3.5-turbo',api_key='Your API Key')
-    llm = LLM().init_model('VllmGPT', model_path= 'THUDM/chatglm3-6b')
+    # llm = LLM().init_model('VllmGPT', model_path= 'THUDM/chatglm3-6b')
+    llm = LLM().init_model('Qwen', model_path= 'Qwen/Qwen-1_8B-Chat',api_key='sk-ff7709efb1a04550bfe078a4360d88ed', proxy_url='https://dashscope.aliyuncs.com/compatible-mode/v1')
+
     response = llm.chat(message)
     print(response)
     return response
@@ -91,8 +94,8 @@ async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
-    iceServers = [RTCIceServer(urls=["stun:stun.l.google.com:19302"]), RTCIceServer(urls=["turn:turn.service.yongdao365.com:3478"],username="yongdao",credential="VM5LVDn8fe")]
-
+    #iceServers = [RTCIceServer(urls=["stun:stun.l.google.com:19302"]), RTCIceServer(urls=["turn:turn.service.yongdao365.com:3478"],username="yongdao",credential="VM5LVDn8fe")]
+    iceServers = [RTCIceServer(urls=["turn:turn.service.yongdao365.com:3478"],username="yongdao",credential="VM5LVDn8fe")]
     # Debugging: Print the iceServers configuration
     print("ICE Servers Configuration:", iceServers)
 

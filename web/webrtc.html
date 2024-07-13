@@ -2,55 +2,98 @@
 <html>
 <head>
     <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebRTC webcam</title>
+    <meta name = "viewport" content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title></title>
     <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
     button {
         padding: 8px 16px;
     }
 
-    video {
-        width: 100%;
+    .video {
+        position: relative;
+        height: 100vh;
+        width: 100vw;
+        z-index: 1;
     }
+
 
     .option {
         margin-bottom: 8px;
     }
 
     #media {
-        max-width: 1280px;
+        /* max-width: 1280px; */
     }
     </style>
 </head>
-<body>
+<body style="overflow: hidden; height: 100vh; width: 100vw; background-color: #000;">
 
-<div class="option">
-    <input id="use-stun" type="checkbox"/>
-    <label for="use-stun">Use STUN server</label>
+<div style="position: absolute; left: 9999px; top: 9999px; opacity: 0; ">
+  <div class="option">
+      <input id="use-stun" autocomplete="off" type="checkbox"/>
+      <label for="use-stun">Use STUN server</label>
+  </div>
+  <button id="start" onclick="start()">Start</button>
+  <button id="stop" style="display: none" onclick="stop()">Stop</button>
 </div>
-<button id="start" onclick="start()">Start</button>
-<button id="stop" style="display: none" onclick="stop()">Stop</button>
-<form class="form-inline" id="echo-form">
-    <div class="form-group">
-      <p>input text</p>
 
-      <textarea cols="2" rows="3" style="width:600px;height:50px;" class="form-control" id="message">test</textarea>
-    </div>
+
+<div id="media" style="position: absolute; display: flex; align-items: center; justify-content: center; left: 0; right: 0; bottom: 60px; top: 0; background-color: #000;">
+    <!-- <h2>Media</h2> -->
+    <audio id="audio" style="opacity: 0; position: absolute; left: 9999px; top: 9999px; opacity: 0;" autoplay="true"></audio>
+    <video id="video" style="height: 100%; width: 100%;" autoplay="true" playsinline="true"></video>
+</div>
+
+<form style="position: absolute; z-index: 1000; left: 0; height: 60px; display: flex; align-items: center; justify-content: center; right: 0; bottom: 0; padding: 0 10px; background-color: #ddd;" id="echo-form">
+  <div class="form-group" style="position: absolute; opacity:0; left:9999px; top: 9999px;">
+    <p>input text</p>
+
+    <textarea cols="2" rows="3" style="width:600px;height:50px;" class="form-control">test</textarea>
     <button type="submit" class="btn btn-default">Send</button>
-  </form>
-
-<div id="media">
-    <h2>Media</h2>
-
-    <audio id="audio" autoplay="true"></audio>
-    <video id="video" style="width:600px;" autoplay="true" playsinline="true"></video>
-</div>
+  </div>
+  
+  <div style="display: flex; flex:1; align-items: center; justify-content: space-between;">
+    <div style="display: flex; flex: 1">
+      <input id="message" type="text" autocomplete="off" style="display: block; padding: 0 4px; border-radius: 8px; border: 1px solid #aaa; flex: 1; font-size: 15px; height: 36px; outline: none;" />
+    </div>
+    <div style="border: 1px solid rgb(1, 24, 92); position: relative; color: #fff; background-color: #02249f; margin-left: 10px; width: 80px; height: 36px; text-align: center; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+      <span style="font-size: 14px;">发送</span>
+      <button type="submit" style="position: absolute; opacity: 0; left: 0; top: 0; width: 100%; height: 100%;">Send</button> 
+    </div>
+  </div>
+  <div id="questionId" style="position: absolute; display: none; top: -120px; border-bottom: 1px solid #ddd; left: 0; right: 0; background-color: #eee;">
+    <ul id="questionListId">
+      <li style="height: 40px; cursor: pointer; padding-left: 10px; border-bottom: 1px solid #ddd; font-size: 14px; text-align: left; line-height: 40px;">你是谁</li>
+      <li style="height: 40px; cursor: pointer; padding-left: 10px; border-bottom: 1px solid #ddd; font-size: 14px; text-align: left; line-height: 40px;">你好啊</li>
+      <li style="height: 40px; cursor: pointer; padding-left: 10px; border-bottom: 1px solid #ddd; font-size: 14px; text-align: left; line-height: 40px;">我想了解南京的历史</li>
+    </ul>
+  </div>
+</form> 
 
 <script src="client.js"></script>
 <script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.3.4.js"></script>
 <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.1.min.js"></script>
 </body>
 <script type="text/javascript" charset="utf-8">
+
+  $('#message').click(function() {
+    $('#questionId').fadeIn()
+  })
+
+  $('#media').click(function() {
+    $('#questionId').fadeOut()
+  })
+
+  $('#questionListId').find('li').click(function(evt) {
+
+    $('#questionId').fadeOut()
+    $('#message').val($(evt.target).text())
+  })
+  
 
 	$(document).ready(function() {
 	  var host = window.location.hostname
@@ -78,6 +121,8 @@
 		ws.send(message);
 		$('#message').val('');
 	  });
+
+    start()
 	});
 </script>
 </html>
