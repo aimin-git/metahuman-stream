@@ -136,10 +136,14 @@ async def offer(request):
 async def human(request):
     params = await request.json()
 
+    if params.get('interrupt'):
+        nerfreal.pause_talk()
+
     if params['type']=='echo':
         nerfreal.put_msg_txt(params['text'])
     elif params['type']=='chat':
-        res=await asyncio.get_event_loop().run_in_executor(None, llm_response(params['text']))                          
+        #res=await asyncio.get_event_loop().run_in_executor(None, llm_response(params['text']))                          
+        res=llm_response(params['text'])
         nerfreal.put_msg_txt(res)
 
     return web.Response(
@@ -428,11 +432,21 @@ if __name__ == '__main__':
         if opt.transport=='rtcpush':
             loop.run_until_complete(run(opt.push_url))
         loop.run_forever()    
-    Thread(target=run_server, args=(web.AppRunner(appasync),)).start()
+    #Thread(target=run_server, args=(web.AppRunner(appasync),)).start()
+    run_server(web.AppRunner(appasync))
     #multiprocessing.Process(target=run_server_sync, args=(nerfreal,)).start()
-    print('start websocket server')
+    #print('start websocket server')
     #app.on_shutdown.append(on_shutdown)
     #app.router.add_post("/offer", offer)
-    server = pywsgi.WSGIServer(('0.0.0.0', 30003), app, handler_class=WebSocketHandler)
-    server.serve_forever()
+    #server = pywsgi.WSGIServer(('0.0.0.0', 30003), app, handler_class=WebSocketHandler)
+    #server.serve_forever()
+    #Thread(target=run_server, args=(web.AppRunner(appasync),)).start()
+    #run_server(web.AppRunner(appasync))
+
+    #app.on_shutdown.append(on_shutdown)
+    #app.router.add_post("/offer", offer)
+
+    # print('start websocket server')
+    # server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
+    # server.serve_forever()
     

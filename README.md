@@ -6,11 +6,10 @@ Real time interactive streaming digital human， realize audio video synchronous
 ## Features
 1. 支持多种数字人模型: ernerf、musetalk、wav2lip
 2. 支持声音克隆
-3. 支持多种音频特征驱动：wav2vec、hubert
+3. 支持数字人说话被打断
 4. 支持全身视频拼接
 5. 支持rtmp和webrtc
 6. 支持视频编排：不说话时播放自定义视频
-7. 支持大模型对话
 
 ## 1. Installation
 
@@ -34,7 +33,7 @@ linux cuda环境搭建可以参考这篇文章 https://zhuanlan.zhihu.com/p/6749
 
 ## 2. Quick Start
 默认采用ernerf模型，webrtc推流到srs  
-### 2.1 运行rtmpserver (srs)
+### 2.1 运行srs
 ```
 export CANDIDATE='<服务器外网ip>'
 docker run --rm --env CANDIDATE=$CANDIDATE \
@@ -128,6 +127,7 @@ python app.py --customvideo --customvideo_img data/customvideo/img --customvideo
 ```
 python app.py --transport webrtc
 ```
+服务端需要开放端口 tcp:8010; udp:50000~60000  
 用浏览器打开http://serverip:8010/webrtcapi.html
 
 ### 3.8 rtmp推送到srs
@@ -170,12 +170,17 @@ cd MuseTalk
 修改configs/inference/realtime.yaml，将preparation改为True
 python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml
 运行后将results/avatars下文件拷到本项目的data/avatars下
+方法二
+执行
+cd musetalk 
+python simple_musetalk.py --avatar_id 4  --file D:\\ok\\test.mp4
+支持视频和图片生成 会自动生成到data的avatars目录下
 ```
 
 ### 3.10 模型用wav2lip
 暂不支持rtmp推送
 - 下载模型  
-下载wav2lip运行需要的模型，网盘地址 https://drive.uc.cn/s/3683da52551a4
+下载wav2lip运行需要的模型，链接: https://pan.baidu.com/s/1yOsQ06-RIDTJd3HFCw4wtA  密码: ltua
 将s3fd.pth拷到本项目wav2lip/face_detection/detection/sfd/s3fd.pth, 将wav2lip.pth拷到本项目的models下  
 数字人模型文件 wav2lip_avatar1.tar.gz, 解压后将整个文件夹拷到本项目的data/avatars下
 - 运行  
@@ -192,7 +197,7 @@ python genavatar.py --video_path xxx.mp4
 ## 4. Docker Run  
 不需要前面的安装，直接运行。
 ```
-docker run --gpus all -it --network=host --rm registry.cn-beijing.aliyuncs.com/codewithgpu2/lipku-metahuman-stream:TzZGB72JKt
+docker run --gpus all -it --network=host --rm registry.cn-beijing.aliyuncs.com/codewithgpu2/lipku-metahuman-stream:vjo1Y6NJ3N
 ```
 代码在/root/metahuman-stream，先git pull拉一下最新代码，然后执行命令同第2、3步 
 
